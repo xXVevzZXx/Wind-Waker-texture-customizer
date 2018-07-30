@@ -18,3 +18,9 @@ More models other than Link will be coming soon so check back later again :)
 ### Bugs
 
 It would be great if you could report any bugs you may find to me on Discord: Sarah#0929.
+
+### Todo
+
+- Simple/Advanced mode for manual/automatic shadings
+- Preset implementation
+- Include source textures into jar if permission is given

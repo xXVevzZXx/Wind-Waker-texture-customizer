@@ -5,7 +5,10 @@
 
 This is a very simple Programm, but there are some things you need to prepare for it to get it to work.
 firstly you need to put the Programm Jar file into a Folder since it creates some directorys in its current directory.
-After you have done that, you need to get a source texture of Link. Currently the only texture working for this is the Link texture from Hypatia which you can get here http://onthegreatsea.tumblr.com/DOWNLOADS.
+After you have done that, you need to get a source texture of Link. Currently the only texture working for this is the Link texture from Hypatia which you can get here: 
+
+http://onthegreatsea.tumblr.com/DOWNLOADS.
+
 When you get into the Programm there is a button which wants you to select a source. Click on it and select the png in this directory:
 "GZLE01\Characters\Link\01  Normal Link/tex1_160x96_6ae2a887601ba80b_14.png" for Links textures.
 

@@ -1,6 +1,8 @@
 package de.piedev.core.converter;
 
-public enum Model
+import java.io.Serializable;
+
+public enum Model implements Serializable
 {
 	LINK(
 			"/link",

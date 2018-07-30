@@ -65,7 +65,11 @@ public class ColorConverter
 	        	int oldColor = _source.getRGB(x, y);
 	            if (_colorsToReplace.containsKey(oldColor))
 	            {
-	                _source.setRGB(x, y, _colorsToReplace.get(oldColor).getRGB());
+	            	try
+	            	{
+		                _source.setRGB(x, y, _colorsToReplace.get(oldColor).getRGB());
+	            	}
+	            	catch (Exception e) {}
 	            }
 	            else if (_imagesToReplace.containsKey(oldColor))
 	            {

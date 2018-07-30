@@ -21,6 +21,6 @@ It would be great if you could report any bugs you may find to me on Discord: Sa
 
 ### Todo
 
-- Simple/Advanced mode for manual/automatic shadings
-- Preset implementation
+- ~~Simple/Advanced mode for manual/automatic shadings
+- ~~Preset implementation
 - Include source textures into jar if permission is given

@@ -4,7 +4,7 @@
 
   <groupId>WWTextureCustomizer</groupId>
   <artifactId>WWTextureCustomizer</artifactId>
-  <version>0.9.2-ALPHA</version>
+  <version>0.9.3-ALPHA</version>
   <packaging>jar</packaging>
 
   <name>WWSkinChanger</name>

@@ -13,12 +13,10 @@ public class ColorConverter
 	private HashMap<Integer, Color> _colorsToReplace = new HashMap<>();
 	private HashMap<Integer, String> _imagesToReplace = new HashMap<>();
 	private BufferedImage _source;
-	private BufferedImage _overlay;
 	
-	public ColorConverter(BufferedImage source, BufferedImage overlay)
+	public ColorConverter(BufferedImage source)
 	{
 		_source = source;
-		_overlay = overlay; 
 	}
 	
 	public void addReplacement(int oldColor, Color newColor)
@@ -33,24 +31,7 @@ public class ColorConverter
 	
 	public void convert() 
 	{
-		overwriteOriginal();
 		changeColors();
-	}
-	
-	private void overwriteOriginal()
-	{
-	    int width = _source.getWidth();
-	    int height = _source.getHeight();
-		for (int x = 0; x < width; x++) 
-	    {
-	        for (int y = 0; y < height; y++) 
-	        {
-	        	if (((_overlay.getRGB(x, y)>>24) & 0xff) != 0)
-	        	{
-		        	_source.setRGB(x, y, _overlay.getRGB(x, y));
-	        	}
-	        }
-	    }
 	}
 	
 	private void changeColors()

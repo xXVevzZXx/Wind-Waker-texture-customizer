@@ -14,6 +14,7 @@ import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
+import javax.xml.soap.Text;
 
 import de.piedev.core.SkinEditor;
 import de.piedev.core.config.Config;
@@ -57,9 +58,8 @@ public class TextureManager extends Module
 	{
 		try
 		{
-			BufferedImage source = ImageIO.read(new File(ConfigManager.getInstance().getConfig("Sourcefiles").getString(model.toString())));
-			BufferedImage overlay = ImageIO.read(getClass().getResource(model.getPath() + "/" + model.getPNGName()));
-			ColorConverter converter = new ColorConverter(source, overlay);
+			BufferedImage image = ImageIO.read(getClass().getResource(model.getPath() + "/" + model.getPNGName()));
+			ColorConverter converter = new ColorConverter(image);
 			colors.entrySet().stream().forEach((entry) -> 
 			{
 				converter.addReplacement(entry.getKey().getWriterColor().getRGB(), entry.getValue());
@@ -78,6 +78,24 @@ public class TextureManager extends Module
 			}
 			File file = new File(MADETEXTURES + model.getPath() + "/" + model.getPNGName());
 			ImageIO.write(converted, "png", file);
+			
+			if (model.hasAdditionalImages())
+			{
+				for (String addimageName : model.getAdditionalImages())
+				{
+					BufferedImage addImage = ImageIO.read(getClass().getResource(model.getPath() + "/" + addimageName));
+					ColorConverter addconverter = new ColorConverter(addImage);
+					for (Texture addParse : model.getAdditionalParsers())
+					{
+						addconverter.addReplacement(addParse.getWriterColor().getRGB(), colors.get(addParse));
+					}
+					addconverter.convert();
+					
+					BufferedImage addconverted = addconverter.getImage();
+					File addfile = new File(MADETEXTURES + model.getPath() + "/" + addimageName);
+					ImageIO.write(addconverted, "png", addfile);
+				}
+			}
 		} 
 		catch (IOException e)
 		{

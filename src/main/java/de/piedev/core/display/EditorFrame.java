@@ -16,8 +16,6 @@ import javax.swing.JToggleButton;
 import javax.swing.border.EmptyBorder;
 
 import de.piedev.core.SkinEditor;
-import de.piedev.core.config.Config;
-import de.piedev.core.config.ConfigManager;
 import de.piedev.core.converter.Model;
 import de.piedev.core.converter.Texture;
 import de.piedev.core.converter.TextureType;
@@ -41,7 +39,6 @@ public class EditorFrame extends JFrame implements Listener
 	private JLabel _lblModelToEdit; 
 	private JButton _createTextures; 
 	private JToggleButton _simplemodeButton;
-	private JButton _sourcebutton;
 	private JButton _loadPreset;
 	private JButton _savePreset;
 	
@@ -127,13 +124,6 @@ public class EditorFrame extends JFrame implements Listener
 		
 		_createTextures.addActionListener((e) ->
 		{
-
-			if (ConfigManager.getInstance().getConfig("Sourcefiles").getString(_currentModel.toString()).contentEquals("PATH"))
-			{
-				JOptionPane.showMessageDialog(this, "Please set a Source Texture!");
-				return;
-			}
-			
 			if (_simplemode)
 			{
 				for (Texture texture : ((HashMap<Texture, Color>) _currentColors.clone()).keySet())
@@ -158,27 +148,6 @@ public class EditorFrame extends JFrame implements Listener
 		});
 		
 		_contentPane.add(_createTextures);
-		
-		_sourcebutton = new JButton("Set Source Texture");
-		_sourcebutton.addActionListener((e) -> 
-		{
-			FileDialog dialog = new FileDialog(this, "Select an Image", FileDialog.LOAD);
-			dialog.setVisible(true);
-			String file = dialog.getFile();
-			if(file == null)
-	        	return;
-			
-			String source = dialog.getDirectory() + file;
-					
-			if (source.endsWith("png") || source.endsWith("jpg"))
-			{
-				Config config = ConfigManager.getInstance().getConfig("Sourcefiles"); 
-				config.setString(_currentModel.toString(), source);
-				ConfigManager.getInstance().safeConfigs();	
-			}
-		});
-		_sourcebutton.setBounds(314, 17, 162, 23);
-		_contentPane.add(_sourcebutton);
 		
 		_lblModelToEdit = new JLabel("Model to edit");
 		_lblModelToEdit.setFont(new Font("Arial", Font.PLAIN, 20));
@@ -209,10 +178,12 @@ public class EditorFrame extends JFrame implements Listener
 			{
 				_currentColors.clear();
 				_currentImages.clear();
-				_simplemode = false;
 				
 				for (Texture texture : currentModel.getTextures())
 				{
+					if (_simplemode && texture.isShade())
+						continue;
+						
 					_currentColors.put(texture, texture.getDefaultColor());
 				}
 			}
@@ -220,7 +191,6 @@ public class EditorFrame extends JFrame implements Listener
 			_contentPane.add(_lblModelToEdit);
 			_contentPane.add(_modelSelector);
 			_contentPane.add(_createTextures);
-			_contentPane.add(_sourcebutton);
 			_contentPane.add(_simplemodeButton);
 			_contentPane.add(_loadPreset);
 			_contentPane.add(_savePreset);
@@ -238,7 +208,6 @@ public class EditorFrame extends JFrame implements Listener
 			{
 				if (texture.isShade() && _simplemode)
 				{
-					_currentColors.remove(texture);
 					continue;
 				}
 				JLabel lblNewLabel = new JLabel(texture.getFriendlyName());

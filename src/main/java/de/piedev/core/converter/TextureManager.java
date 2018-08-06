@@ -4,21 +4,25 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.nio.charset.MalformedInputException;
 import java.util.HashMap;
 
+import javax.annotation.Generated;
 import javax.imageio.ImageIO;
 import javax.swing.JOptionPane;
-import javax.xml.soap.Text;
 
 import de.piedev.core.SkinEditor;
 import de.piedev.core.config.Config;
 import de.piedev.core.config.ConfigManager;
+import de.piedev.core.converter.display.ColorOptionsComponent;
+import de.piedev.core.converter.display.EditorFrame;
+import de.piedev.core.converter.display.GenerateTexturesComponent;
+import de.piedev.core.converter.display.ModelSelectorComponent;
+import de.piedev.core.converter.display.PresetComponent;
+import de.piedev.core.converter.display.SimplemodeComponent;
 import de.piedev.core.module.Module;
 import de.piedev.core.preset.Preset;
 
@@ -26,6 +30,14 @@ public class TextureManager extends Module
 {
 	public static final String MADETEXTURES = "textures";
 	public static final String PRESETS = "presets";
+	
+	private Model _currentModel;
+	private boolean _simplemode;
+	
+	private HashMap<Texture, Color> _currentColors = new HashMap<>();
+	private HashMap<Texture, String> _currentImages = new HashMap<>();
+	
+	private EditorFrame _frame;
 
 	public TextureManager(SkinEditor manager)
 	{
@@ -40,31 +52,35 @@ public class TextureManager extends Module
 		{
 			new File(PRESETS).mkdirs();
 		}
-		
-		ConfigManager.getInstance().addConfig(new Config("Sourcefiles")
-		{
-			@Override
-			public void buildConfig(File file)
-			{
-				for (Model model : Model.values())
-				{
-					setString(model.toString(), "PATH");	
-				}
-			}
-		});
 	}
 	
-	public void generatetextures(Model model, HashMap<Texture, Color> colors, HashMap<Texture, String> images)
+	@Override
+	public void onEnable()
+	{
+		_frame = new EditorFrame(getMain());
+		getMain().getModuleManager().getEventManager().registerListener(_frame);
+		
+		_frame.addComponent(new ModelSelectorComponent(this, _frame));
+		_frame.addComponent(new SimplemodeComponent(this));
+		_frame.addComponent(new PresetComponent(this, _frame));
+		_frame.addComponent(new GenerateTexturesComponent(this, _frame));
+		
+		_frame.initComponents();
+		
+		changeModel(Model.LINK);
+	};
+	
+	public void generatetextures()
 	{
 		try
 		{
-			BufferedImage image = ImageIO.read(getClass().getResource(model.getPath() + "/" + model.getPNGName()));
+			BufferedImage image = ImageIO.read(getClass().getResource(_currentModel.getPath() + "/" + _currentModel.getPNGName()));
 			ColorConverter converter = new ColorConverter(image);
-			colors.entrySet().stream().forEach((entry) -> 
+			_currentColors.entrySet().stream().forEach((entry) -> 
 			{
 				converter.addReplacement(entry.getKey().getWriterColor().getRGB(), entry.getValue());
 			});
-			images.entrySet().stream().forEach((entry) ->
+			_currentImages.entrySet().stream().forEach((entry) ->
 			{
 				converter.addReplacement(entry.getKey().getWriterColor().getRGB(), entry.getValue());
 			});
@@ -72,27 +88,27 @@ public class TextureManager extends Module
 			converter.convert();
 			
 			BufferedImage converted = converter.getImage();
-			if (!new File(MADETEXTURES + model.getPath()).isDirectory())
+			if (!new File(MADETEXTURES + _currentModel.getPath()).isDirectory())
 			{
-				new File(MADETEXTURES + model.getPath()).mkdirs();
+				new File(MADETEXTURES + _currentModel.getPath()).mkdirs();
 			}
-			File file = new File(MADETEXTURES + model.getPath() + "/" + model.getPNGName());
+			File file = new File(MADETEXTURES + _currentModel.getPath() + "/" + _currentModel.getPNGName());
 			ImageIO.write(converted, "png", file);
 			
-			if (model.hasAdditionalImages())
+			if (_currentModel.hasAdditionalImages())
 			{
-				for (String addimageName : model.getAdditionalImages())
+				for (String addimageName : _currentModel.getAdditionalImages())
 				{
-					BufferedImage addImage = ImageIO.read(getClass().getResource(model.getPath() + "/" + addimageName));
+					BufferedImage addImage = ImageIO.read(getClass().getResource(_currentModel.getPath() + "/" + addimageName));
 					ColorConverter addconverter = new ColorConverter(addImage);
-					for (Texture addParse : model.getAdditionalParsers())
+					for (Texture addParse : _currentModel.getAdditionalParsers())
 					{
-						addconverter.addReplacement(addParse.getWriterColor().getRGB(), colors.get(addParse));
+						addconverter.addReplacement(addParse.getWriterColor().getRGB(), _currentColors.get(addParse));
 					}
 					addconverter.convert();
 					
 					BufferedImage addconverted = addconverter.getImage();
-					File addfile = new File(MADETEXTURES + model.getPath() + "/" + addimageName);
+					File addfile = new File(MADETEXTURES + _currentModel.getPath() + "/" + addimageName);
 					ImageIO.write(addconverted, "png", addfile);
 				}
 			}
@@ -118,9 +134,9 @@ public class TextureManager extends Module
 		return finalColor;
 	}
 	
-	public void savePreset(Model model, HashMap<Texture, Color> colors, boolean simpleMode, String name)
+	public void savePreset(String name)
 	{
-		Preset preset = new Preset(model, colors, simpleMode);
+		Preset preset = new Preset(_currentModel, _currentColors, _simplemode);
 		
 		File file = new File(PRESETS + "/" + name + ".wwpreset");
 		try
@@ -148,7 +164,7 @@ public class TextureManager extends Module
 		
 	}
 	
-	public Preset loadPreset(String path)
+	public void loadPreset(String path)
 	{	
 		File file = new File(path);
 		try
@@ -157,13 +173,77 @@ public class TextureManager extends Module
 			ObjectInputStream ois = new ObjectInputStream(fis);
 			Preset preset = (Preset) ois.readObject();
 			ois.close();
-			return preset;
+			
+			changeModel(preset.getModel());
+			
+			for (Texture texture : preset.getColors().keySet())
+			{
+				setTextureColor(texture, preset.getColors().get(texture));
+			}
 		} 
 		catch (Exception e)
 		{
 			e.printStackTrace();
 		}
-		return null;
+	}
+	
+	public void changeModel(Model model)
+	{
+		_currentModel = model;
+		_currentColors.clear();
+		_currentImages.clear();
+	
+		for (Texture texture : model.getTextures())
+		{
+			_currentColors.put(texture, texture.getDefaultColor());
+		}
+		
+		if (_frame.hasComponent(ColorOptionsComponent.class))
+		{
+			_frame.removeComponent(_frame.getComponent(ColorOptionsComponent.class));
+		}
+		
+		_frame.addComponent(new ColorOptionsComponent(_frame, this, model));
+	}
+	
+	public void setTextureColor(Texture tex, Color color)
+	{
+		_currentColors.put(tex, color);
+		_frame.getComponent(ColorOptionsComponent.class).getButtons().get(tex).setBackground(color);
+		
+		if (_simplemode)
+		{
+			if (!tex.hasShades())
+				return;
+
+			Color shadecolor = _currentColors.get(tex);
+			for (Texture shades : tex.getShades())
+			{
+				Color shade = new Color(getShadeOfColor(shadecolor, shades));
+				_currentColors.put(shades, shade);
+				_frame.getComponent(ColorOptionsComponent.class).getButtons().get(shades).setBackground(shade);
+			}
+		}
+	}
+	
+	public void setSimpleMode(boolean simplemode)
+	{
+		_simplemode = simplemode;
+	}
+	
+	public void setTextureImage(Texture tex, String image)
+	{
+		_currentImages.put(tex, image);
+	}
+	
+	public boolean isSimpleMode()
+	{
+		return _simplemode;
+	}
+	
+	public Model getCurrentModel()
+	{
+		return _currentModel;
 	}
 	
 }

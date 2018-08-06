@@ -1,7 +1,7 @@
 package de.piedev.core;
 
 import de.piedev.core.converter.TextureManager;
-import de.piedev.core.display.EditorFrame;
+import de.piedev.core.converter.display.EditorFrame;
 import de.piedev.core.event.types.TickEvent;
 import de.piedev.core.logging.LogManager;
 import de.piedev.core.module.ModuleManager;
@@ -41,9 +41,6 @@ public class SkinEditor
 		
 		_moduleManager.enableModules();
 		
-		EditorFrame frame = new EditorFrame(this);
-		_moduleManager.getEventManager().registerListener(frame);
-		
 		initUpdater();
 	}
 	
@@ -63,7 +60,7 @@ public class SkinEditor
 		}
 	}
 	
-	public TextureManager getTextureMnager()
+	public TextureManager getTextureManager()
 	{
 		return _textureManager;
 	}
